@@ -1,13 +1,36 @@
-import debugFactory from 'debug';
-import assign from 'object.assign';
+import debug from 'debug';
+import _ from 'lodash';
 
-const censor = '**********************:P********';
-const debug = debugFactory('freecc:services:user');
-const protectedUserFields = {
-  id: censor,
-  password: censor,
-  profiles: censor
-};
+const publicUserProps = [
+  'id',
+  'name',
+  'username',
+  'bio',
+  'theme',
+  'picture',
+  'points',
+  'email',
+  'languageTag',
+
+  'isCheater',
+  'isGithubCool',
+
+  'isLocked',
+  'isAvailableForHire',
+  'isFrontEndCert',
+  'isBackEndCert',
+  'isDataVisCert',
+  'isFullStackCert',
+
+  'githubURL',
+  'sendMonthlyEmail',
+  'sendNotificationEmail',
+  'sendQuincyEmail',
+
+  'currentChallengeId',
+  'challengeMap'
+];
+const log = debug('fcc:services:user');
 
 export default function userServices() {
   return {
@@ -15,13 +38,30 @@ export default function userServices() {
     read: (req, resource, params, config, cb) => {
       let { user } = req;
       if (user) {
-        debug('user is signed in');
-        // Zalgo!!!
-        return process.nextTick(() => {
-          cb(null, assign({}, user.toJSON(), protectedUserFields));
-        });
+        log('user is signed in');
+        return user.getChallengeMap$()
+          .map(challengeMap => ({ ...user.toJSON(), challengeMap }))
+          .subscribe(
+            user => cb(
+              null,
+              {
+                entities: {
+                  user: {
+                    [user.username]: {
+                      ..._.pick(user, publicUserProps),
+                      isTwitter: !!user.twitter,
+                      isLinkedIn: !!user.linkedIn
+                    }
+                  }
+                },
+                result: user.username
+              }
+            ),
+            cb
+          );
       }
       debug('user is not signed in');
+      // Zalgo!!!
       return process.nextTick(() => {
         cb(null, {});
       });

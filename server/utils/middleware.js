@@ -6,7 +6,7 @@ export function ifNoUserRedirectTo(url, message, type = 'errors') {
     }
 
     req.flash(type, {
-      msg: message || `You must be signed to go to ${path}`
+      msg: message || `You must be signed in to access ${path}`
     });
 
     return res.redirect(url);
@@ -27,4 +27,19 @@ export function ifNoUser401(req, res, next) {
     return next();
   }
   return res.status(401).end();
+}
+
+export function ifNotVerifiedRedirectToSettings(req, res, next) {
+  const { user } = req;
+  if (!user) {
+    return next();
+  }
+  if (!user.emailVerified) {
+    req.flash('error', {
+      msg: 'We do not have your verified email address on record, '
+      + 'please add it in the settings to continue with your request.'
+    });
+    return res.redirect('/settings');
+  }
+  return next();
 }

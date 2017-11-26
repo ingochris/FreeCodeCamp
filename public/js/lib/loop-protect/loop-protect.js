@@ -72,7 +72,7 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
         }
       }
       j -= 1;
-    } while (j !== 0);
+    } while (j >= 0);
 
     return false;
   }
@@ -88,8 +88,8 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
       }
       if (character === '/' || character === '*') {
         // looks like a comment, go back one to confirm or not
-        --index;
-        if (character === '/') {
+        var prevCharacter = line.substr(index - 1, 1);
+        if (prevCharacter === '/') {
           // we've found a comment, so let's exit and ignore this line
           DEBUG && debug('- exit: part of a comment'); // jshint ignore:line
           return true;
@@ -130,6 +130,7 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
     var ignore = {};
     var pushonly = {};
     var labelPostion = null;
+    var labelIndex = -1;
 
     function insertReset(lineNum, line, matchPosition) {
       // recompile the line with the reset **just** before the actual loop
@@ -179,6 +180,7 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
             if (directlyBeforeLoop(index, lineNum, lines)) {
               DEBUG && debug('- found a label: "' + labelMatch[0] + '"'); // jshint ignore:line
               labelPostion = lineNum;
+              labelIndex = index;
             } else {
               DEBUG && debug('- ignored "label", false positive'); // jshint ignore:line
             }
@@ -309,10 +311,11 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
                 DEBUG && debug('- reset inserted above matched label on line ' + labelPostion); // jshint ignore:line
                 if (recompiled[labelPostion] === undefined) {
                   labelPostion--;
-                  matchPosition = 0;
+                  labelIndex = 0;
                 }
-                recompiled[labelPostion] = insertReset(printLineNumber, recompiled[labelPostion], matchPosition);
+                recompiled[labelPostion] = insertReset(printLineNumber, recompiled[labelPostion], labelIndex);
                 labelPostion = null;
+                labelIndex = -1;
               }
             }
 
@@ -355,8 +358,10 @@ if (typeof DEBUG === 'undefined') { DEBUG = true; }
                 index++;
 
                 if (index === line.length && lineNum < (lines.length-1)) {
-                  lineNum++;
-                  line = lines[lineNum];
+                  do {
+                    lineNum++;
+                    line = lines[lineNum];
+                  } while (line.length === 0);
                   DEBUG && debug(line); // jshint ignore:line
                   index = 0;
                 }

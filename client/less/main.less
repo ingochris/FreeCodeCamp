@@ -1,8 +1,9 @@
-@import "lib/bootstrap/bootstrap";
-@import "lib/bootstrap-social/bootstrap-social";
-@import "lib/ionicons/ionicons";
-@import "lib/animate.min.less";
-@import "lib/bootstrap/variables";
+@import "./lib/bootstrap/bootstrap";
+@import "./lib/bootstrap-social/bootstrap-social";
+@import "./lib/ionicons/ionicons";
+@import "./lib/animate";
+@import "./lib/bootstrap/variables";
+@import "./flexgrid.less";
 
 html,body,div,span,a,li,td,th {
   font-family: 'Lato', sans-serif;
@@ -34,13 +35,6 @@ pre.wrappable {
   word-wrap: break-word;      /* IE 5+ */
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-  // hack to prevent horizontal overflow problem on showHTML view
-  overflow-x: hidden;
-}
-
 //input[type=checkbox] {
 //  /* Double-sized Checkboxes */
 //  -ms-transform: scale(2); /* IE */
@@ -54,17 +48,11 @@ html {
   border-color: @brand-primary;
 }
 
-body.full-screen-body-background {
+.full-screen-body-background {
   background-color: @body-bg;
 }
 
-
-body.top-and-bottom-margins {
-  padding-top: 80px;
-  margin-bottom: 60px;
-}
-
-body.no-top-and-bottom-margins {
+.no-top-and-bottom-margins {
   margin: 75px 20px 0px 20px;
 }
 
@@ -124,11 +112,7 @@ h1, h2, h3, h4, h5, h6, p, li {
   box-shadow:         2px 4px 1px rgba(0, 0, 0, 0.3);
 }
 
-.btn-nav {
-  margin-top: 10px;
-}
-
-ul {
+.large-li > li {
   list-style: none;
 }
 
@@ -142,19 +126,11 @@ ul {
   margin: 2px;
 }
 
-.navbar-brand {
-  font-size: 26px;
-}
-
-.navbar > .container {
-  width: auto;
-  padding-left: 0px;
-  padding-right: 0px;
-}
-
-.nav-height {
-  height: 50px;
-  border: none;
+.hide-test-frame {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  visibility: hidden;
 }
 
 .landing-icon {
@@ -168,6 +144,10 @@ ul {
 
 .positive-15 {
   margin-top: 15px;
+}
+
+.positive-20 {
+  margin-top: 20px;
 }
 
 .positive-15-bottom {
@@ -268,46 +248,6 @@ ul {
   display: none;
 }
 
-.nav-logo {
-  height: 40px;
-  margin-top: -10px;
-
-  @media (max-width: 397px) {
-    height: 30px;
-    margin-top: -5px;
-  }
-  @media (max-width: 335px) {
-    height: 25px;
-    margin-top: -2px;
-  }
-}
-
-.navbar-right {
-  @media (min-width: 767px) {
-    margin-right:0;
-  }
-  @media (max-width: 991px) and (min-width: 767px) {
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin-right: 0px;
-    white-space: nowrap;
-  }
-  background-color: @brand-primary;
-  text-align: center;
-}
-.navbar {
-  white-space: nowrap;
-  border: none;
-  line-height: 1;
-  @media (min-width: 767px) {
-    padding-left: 30px;
-    padding-right: 30px;
-  }
-}
-
-li.avatar, li.avatar > a { padding:0; margin:0 }
-
 .thin-progress-bar {
   height: 8px;
   margin-top: 3px;
@@ -326,7 +266,8 @@ li.avatar, li.avatar > a { padding:0; margin:0 }
 }
 
 .btn-social {
-  width: 250px;
+  width: 100%;
+  max-width: 260px;
   margin: auto;
 }
 
@@ -336,27 +277,17 @@ li.avatar, li.avatar > a { padding:0; margin:0 }
   margin-bottom: 10px;
 }
 
-.navbar {
-  background-color: @brand-primary;
-}
-
 a {
   font-weight: bold;
+  font-size : 15px;
 }
 
 p {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .map-aside-body p {
   line-height: 1.8;
-}
-
-.navbar-nav > li > a {
-  color: @body-bg;
-  &:hover {
-    color: @brand-primary;
-  }
 }
 
 .hug-top {
@@ -456,56 +387,13 @@ thead {
   margin-bottom: 50px;
 }
 
-.profile-picture {
-  height: 50px;
-  width: 50px;
-}
-
-.brownie-points-nav {
-  @media (min-width: 991px) and (max-width: 999px) {
-    margin-right: -10px;
+form.update-email .btn{
+  margin:0;
+  width:40%;
+  display:inline-block;
+  &:last-child {
+    float:right;
   }
-}
-
-.navbar-nav a {
-  color: @body-bg;
-  font-size: 20px;
-  margin-top: -5px;
-  margin-bottom: -5px;
-}
-
-.navbar-toggle {
-  color: @body-bg;
-
-  &:hover,
-  &:focus {
-    color: #4a2b0f;
-  }
-}
-
-
-.signup-btn-nav {
-  margin-top: -2px !important;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-  margin-right: -12px;
-  @media (min-width: 991px) and (max-width: 1010px) {
-    margin-left: -10px;
-    margin-right: -5px;
-  }
-}
-
-.public-profile-img {
-  height: 200px;
-  width: 200px;
-  border-radius: 5px;
-}
-
-.ng-invalid.ng-dirty {
-  border-color: #FA787E;
-}
-.ng-valid.ng-dirty {
-  border-color: #78FA89;
 }
 
 .flat-top {
@@ -574,7 +462,6 @@ thead {
   color: #009900
 }
 
-
 .default-border-radius {
   border-radius: 5px;
 }
@@ -588,7 +475,7 @@ thead {
 }
 
 .testimonial-copy {
-  text-align: justify;
+  text-align: center;
   font-size: 18px !important;
   margin-left: 20px;
   margin-right: 20px;
@@ -600,8 +487,17 @@ thead {
   }
 }
 
-.navbar-collapse {
-  border-top: 0;
+.nonprofit-testimonial-copy {
+  text-align: justify;
+  font-size: 18px !important;
+  margin-left: 20px;
+  margin-right: 20px;
+  @media (min-width: 991px) and (max-width: 1199px) {
+    height: 300px !important;
+  }
+  @media (min-width: 1200px) {
+    height: 200px !important;
+  }
 }
 
 .challenge-list-header {
@@ -620,94 +516,8 @@ thead {
   text-align: right;
 }
 
-.fcc-footer {
-  width: 100%;
-  height: 50px;
-  text-align: center;
-  background-color: @brand-primary;
-  padding: 12px;
-  bottom: 0;
-  left: 0;
-  position: absolute;
-  a {
-    font-size: 20px;
-    color: @gray-lighter;
-    margin-left: 0px;
-    margin-right: 0px;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 14px;
-    padding-bottom: 12px;
-    &:hover {
-      color: @brand-primary;
-      background-color: @gray-lighter;
-      text-decoration: none;
-    }
-  }
-}
-
-.embed-responsive-twitch-chat {
-  padding-bottom: 117%;
-}
-
-#directions {
-  text-align: left;
-  font-size: 15px;
-}
-
 .graph-rect {
   fill: #ddd !important
-}
-
-
-/**
- * Bonfire styling
- */
-
-form.code span {
-  font-size: 18px;
-  font-family: "Ubuntu Mono";
-  padding-bottom: 0px;
-  margin-bottom: 0px;
-  height: 100%;
-}
-
-.CodeMirror {
-  line-height: 1 !important;
-}
-
-.CodeMirror-linenumber {
-  font-size: 18px;
-  font-family: "Ubuntu Mono";
-}
-
-#mainEditorPanel {
-  height: 100%;
-  width: 99%;
-}
-
-.scroll-locker {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-#mainEditorPanel .panel-body {
-  padding-bottom: 0px;
-}
-
-div.CodeMirror-scroll {
-  padding-bottom: 30px;
-}
-
-.test-vertical-center {
-  margin-top: 8px;
-}
-
-.cm-s-monokai.CodeMirror {
-  border-radius: 5px;
-}
-.courseware-height {
-  min-height: 650px;
 }
 
 .btn {
@@ -747,65 +557,6 @@ div.CodeMirror-scroll {
   }
 }
 
-@media (max-width: 991px) {
-  .navbar-header {
-    float: none;
-  }
-
-  .navbar-toggle {
-    display: block;
-  }
-
-  .navbar-collapse.collapse {
-    display: none !important;
-  }
-
-  .navbar-nav {
-    margin-top: 0;
-  }
-
-  .navbar-nav > li {
-    float: none;
-  }
-
-  .navbar-nav > li > a {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
-
-  .navbar-text {
-    float: none;
-    margin: 15px 0;
-  }
-
-  /* since 3.1.0 */
-  .navbar-collapse.collapse.in {
-    display: block !important;
-  }
-
-  .collapsing {
-    overflow: hidden !important;
-    position: absolute;
-    left: 0;
-    right: 0;
-  }
-}
-
-.navbar-toggle {
-  width: 80px;
-  padding-left: 0;
-  padding-right: 8px;
-  margin: 7px 2px 7px 0;
-  text-align: left;
-  font-size: 10px;
-}
-
-.hamburger-text {
-  line-height: 0.75em;
-  margin-top: 10px;
-  font-size: 18px;
-}
-
 .story-list {
   padding-bottom: 30px;
   margin-bottom: 30px;
@@ -819,72 +570,12 @@ div.CodeMirror-scroll {
   padding: 15px 0 15px 0;
 }
 
-.img-news {
-  width: 50px;
-  height: 50px;
-}
-
-.url-preview {
-  max-width: 250px;
-  max-height: 250px;
-}
-
 //.media ~ .media .media-body-wrapper:nth-child(odd) {
 //  background-color: #e5e5e5;
 //}
 
-.news-box {
-  @media (min-width: 768px) {
-    margin-top: -40px;
-  }
-  @media (max-width: 767px) {
-    padding: 5px;
-    border-color: @brand-info;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 5px;
-    width: 100%;
-    float: left;
-  }
-}
-
-.news-box-search {
-  @media (min-width: 768px) {
-    margin-top: -30px;
-    padding-bottom: 20px;
-  }
-  @media (max-width: 767px) {
-    padding: 5px;
-    border-color: @brand-info;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 5px;
-    width: 100%;
-    float: left;
-  }
-}
-
-.story-headline {
-  font-size: 20px;
-  margin-left: 14px;
-  margin-top: -5px;
-}
-
 .landing-heading {
   font-size: 50px !important;
-}
-
-.mobile-story-headline {
-  font-size: 20px;
-}
-
-.story-byline {
-  margin-top: 5px;
-  font-size: 14px;
-}
-
-.media-stories {
-  margin-left: 20px;
 }
 
 hr {
@@ -956,8 +647,8 @@ hr {
 }
 
 .checklist-element {
-    margin-left: -60px;
-    margin-right: -20px;
+  margin-left: -60px;
+  margin-right: -20px;
 }
 
 .profile-social-icons {
@@ -969,21 +660,7 @@ hr {
 }
 
 code {
-  padding: 0;
-}
-
-@media only screen and (min-width: 993px) {
-  .iframe-scroll {
-    position: fixed !important;
-    margin-top: 75px;
-    z-index: 1;
-  }
-}
-@media only screen and (max-width: 992px) {
-  .iframe-scroll {
-    height: auto;
-    overflow: auto;
-  }
+  padding: 1px 5px;
 }
 
 // Calculator styles
@@ -1007,6 +684,26 @@ code {
 
 .gitter-chat-embed {
  z-index: 20000 !important;
+}
+
+.email-settings {
+  @media (max-width: 768px) {
+    text-align: center;
+  }
+}
+
+.toggle-btn-group {
+  float: right;
+  .btn[disabled] {
+    opacity: 1;
+  }
+  @media (max-width: 768px) {
+    float: none;
+    .btn-toggle {
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+  }
 }
 
 
@@ -1118,8 +815,170 @@ code {
   }
 }
 
-@import "chat.less";
-@import "jobs.less";
-@import "challenge.less";
-@import "toastr.less";
-@import "map.less";
+.night {
+  background-color: @night-body-bg;
+  color: @night-text-color;
+  .btn-group,
+  .text-success,
+  .challenge-list-header,
+  .fcc-footer {
+    background-color: @night-body-bg;
+  }
+  hr {
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  }
+  .modal-dialog {
+    .modal-content {
+      background-color: @gray;
+    }
+    .modal-header,
+    .modal-footer {
+      border: none;
+    }
+    .fa-check-circle {
+      color: darken(@brand-primary, 5%);
+    }
+  }
+  a, .input-group-addon, .challenge-instructions a, .challenge-instructions #MDN-links a {
+    color: #f8f8f8;
+  }
+  .fa-github-square {
+    color: @brand-primary;
+    &:hover {
+      color: #CCC;
+    }
+  }
+  .black-text {
+    color:#111;
+  }
+  code {
+    background-color: #242424;
+    color: #02a902;
+  }
+  .fcc-footer {
+    a {
+      &hover {
+        background-color: @night-body-bg;
+      }
+    }
+  }
+  .btn-primary {
+    background-color: @brand-primary;
+    border-color: #777;
+    color:#CCC;
+    transition: color 0.2s, background-color 0.2s;
+    &:hover {
+      background-color: #ABABAB!important;
+      color: @night-body-bg!important;
+    }
+  }
+  //** Profile's activity board
+  .cal-heatmap-container {
+    background-color: @night-body-bg;
+  }
+  .graph-rect {
+    fill: @night-text-color !important
+  }
+  //** Profile's odd rows
+  .table-striped > tbody > tr:nth-child(odd) {
+    background-color: @gray;
+  }
+  .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
+    border-color: @night-text-color;
+  }
+  .btn-toggle {
+    background-color: transparent;
+  }
+  .btn-toggle.active {
+    background-color: @brand-primary;
+  }
+}
+
+//make about page contact table reponsive on small screens
+@media only screen
+and (max-width : 400px)  {
+  table.response-table td {
+      width: 100%;
+      display: block;
+  }
+}
+
+// make btn-default hover more visible
+.btn-default:active,
+.btn-default:hover {
+    background-color: @brand-primary;
+}
+
+// user bio
+.bio {
+  font-size: 17px;
+}
+
+
+.editorScrollDiv {
+  -webkit-overflow-scrolling: touch;
+}
+
+// Account Modal Styles
+.modal-dialog {
+  margin: 80px;
+
+  .modal-content {
+    background-color: #f9f9f9;
+  }
+
+  .modal-header .close {
+    font-size: 30px;
+    padding-left: 10px;
+  }
+
+  .modal-header {
+    text-align: center;
+    padding: 5px 20px;
+  }
+
+  .modal-footer {
+    .spacer {
+      padding: 8px 0 8px 0;
+    }
+
+    .btn {
+      padding: 12px;
+    }
+
+    .btn-success {
+      color: darkgreen;
+      border-color: darkgreen;
+    }
+
+    .btn-success:hover,
+    .btn-success:focus,
+    .btn-success:active {
+      color: #eee;
+      background-color: #208e36;
+      border-color: darkgreen;
+    }
+
+    .modal-textarea {
+      width: 100%;
+      max-width: 590px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      padding: 5px;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-dialog {
+    width: 620px;
+    margin: 150px auto;
+  }
+}
+
+// surrounding downstream import with &{}
+// creates locally scoped imports
+// and prevents vaiables from overwriting each other
+&{ @import "./code-mirror.less"; }
+&{ @import "./toastr.less"; }
+&{ @import "../../common/index.less"; }

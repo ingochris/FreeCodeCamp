@@ -1,9 +1,9 @@
 import dedent from 'dedent';
 import debugFactory from 'debug';
 import { Observable } from 'rx';
-
 import commitGoals from './commit-goals.json';
-const debug = debugFactory('freecc:utils/commit');
+
+const debug = debugFactory('fcc:utils/commit');
 
 export { commitGoals };
 

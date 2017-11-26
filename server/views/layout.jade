@@ -3,10 +3,10 @@ html(lang='en')
   head
     include partials/meta
     include partials/stylesheets
-  body.top-and-bottom-margins
+  body.main-container(class=theme !== 'default' ? theme : '')
     include partials/scripts
     include partials/navbar
+    include partials/flash
     .container
-      include partials/flash
       block content
     include partials/footer

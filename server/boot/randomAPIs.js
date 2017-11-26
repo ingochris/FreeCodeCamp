@@ -1,187 +1,63 @@
-var Rx = require('rx'),
-    async = require('async'),
-    moment = require('moment'),
-    request = require('request'),
-    debug = require('debug')('freecc:cntr:resources'),
-    constantStrings = require('../utils/constantStrings.json'),
-    labs = require('../resources/labs.json'),
-    testimonials = require('../resources/testimonials.json'),
-    secrets = require('../../config/secrets');
+import request from 'request';
+import constantStrings from '../utils/constantStrings.json';
+import testimonials from '../resources/testimonials.json';
+
+const githubClient = process.env.GITHUB_ID;
+const githubSecret = process.env.GITHUB_SECRET;
 
 module.exports = function(app) {
-  var router = app.loopback.Router();
-  var User = app.models.User;
-  var Challenge = app.models.Challenge;
-  var Story = app.models.Story;
-  var Nonprofit = app.models.Nonprofit;
-
-  router.get('/api/github', githubCalls);
-  router.get('/api/blogger', bloggerCalls);
-  router.get('/api/trello', trelloCalls);
-  router.get('/sitemap.xml', sitemap);
-  router.get('/chat', chat);
-  router.get('/coding-bootcamp-cost-calculator', bootcampCalculator);
-  router.get('/twitch', twitch);
-  router.get('/pmi-acp-agile-project-managers', agileProjectManagers);
-  router.get('/pmi-acp-agile-project-managers-form', agileProjectManagersForm);
-  router.get('/nonprofits', nonprofits);
-  router.get('/nonprofits-form', nonprofitsForm);
-  router.get('/unsubscribe/:email', unsubscribe);
-  router.get('/unsubscribed', unsubscribed);
-  router.get('/get-started', getStarted);
-  router.get('/submit-cat-photo', submitCatPhoto);
-  router.get('/labs', showLabs);
-  router.get('/stories', showTestimonials);
-  router.get('/shop', showShop);
-  router.get('/all-stories', showAllTestimonials);
-  router.get('/terms', terms);
-  router.get('/privacy', privacy);
-  router.get('/code-of-conduct', codeOfConduct);
-  router.get(
+  const router = app.loopback.Router();
+  const User = app.models.User;
+  const noLangRouter = app.loopback.Router();
+  noLangRouter.get('/api/github', githubCalls);
+  noLangRouter.get('/chat', chat);
+  noLangRouter.get('/twitch', twitch);
+  noLangRouter.get('/unsubscribe/:email', unsubscribeAll);
+  noLangRouter.get('/unsubscribe-notifications/:email', unsubscribeAll);
+  noLangRouter.get('/unsubscribe-quincy/:email', unsubscribeAll);
+  noLangRouter.get('/submit-cat-photo', submitCatPhoto);
+  noLangRouter.get(
     '/the-fastest-web-page-on-the-internet',
     theFastestWebPageOnTheInternet
   );
 
-  app.use(router);
+  router.get('/unsubscribed', unsubscribed);
+  router.get('/nonprofits', nonprofits);
+  router.get('/nonprofits-form', nonprofitsForm);
+  router.get('/pmi-acp-agile-project-managers', agileProjectManagers);
+  router.get('/pmi-acp-agile-project-managers-form', agileProjectManagersForm);
+  router.get('/coding-bootcamp-cost-calculator', bootcampCalculator);
+  router.get('/stories', showTestimonials);
+  router.get('/all-stories', showAllTestimonials);
+  router.get('/how-nonprofit-projects-work', howNonprofitProjectsWork);
+  router.get(
+      '/software-resources-for-nonprofits',
+      softwareResourcesForNonprofits
+  );
+  router.get('/academic-honesty', academicHonesty);
 
-  function sitemap(req, res, next) {
-    var appUrl = 'http://www.freecodecamp.com';
-    var now = moment(new Date()).format('YYYY-MM-DD');
-
-    // TODO(berks): refactor async to rx
-    async.parallel({
-        users: function(callback) {
-          User.find(
-            {
-              where: { username: { nlike: '' } },
-              fields: { username: true }
-            },
-            function(err, users) {
-              if (err) {
-                debug('User err: ', err);
-                callback(err);
-              } else {
-                Rx.Observable.from(users, null, null, Rx.Scheduler.default)
-                  .map(function(user) {
-                    return user.username;
-                  })
-                  .toArray()
-                  .subscribe(
-                    function(usernames) {
-                      callback(null, usernames);
-                    },
-                    callback
-                  );
-              }
-            });
-        },
-
-        challenges: function(callback) {
-          Challenge.find(
-            { fields: { name: true } },
-            function(err, challenges) {
-              if (err) {
-                debug('Challenge err: ', err);
-                callback(err);
-              } else {
-                Rx.Observable.from(challenges, null, null, Rx.Scheduler.default)
-                  .map(function(challenge) {
-                    return challenge.name;
-                  })
-                  .toArray()
-                  .subscribe(
-                    callback.bind(callback, null),
-                    callback
-                  );
-              }
-            });
-        },
-        stories: function(callback) {
-          Story.find(
-            { field: { link: true } },
-            function(err, stories) {
-              if (err) {
-                debug('Story err: ', err);
-                callback(err);
-              } else {
-                Rx.Observable.from(stories, null, null, Rx.Scheduler.default)
-                  .map(function(story) {
-                    return story.link;
-                  })
-                  .toArray()
-                  .subscribe(
-                    callback.bind(callback, null),
-                    callback
-                  );
-              }
-            }
-          );
-        },
-        nonprofits: function(callback) {
-          Nonprofit.find(
-            { field: { name: true } },
-            function(err, nonprofits) {
-              if (err) {
-                debug('User err: ', err);
-                callback(err);
-              } else {
-                Rx.Observable.from(nonprofits, null, null, Rx.Scheduler.default)
-                  .map(function(nonprofit) {
-                    return nonprofit.name;
-                  })
-                  .toArray()
-                  .subscribe(
-                    callback.bind(callback, null),
-                    callback
-                  );
-              }
-            });
-        }
-      }, function(err, results) {
-        if (err) {
-          return next(err);
-        }
-        process.nextTick(function() {
-          res.header('Content-Type', 'application/xml');
-          res.render('resources/sitemap', {
-            appUrl: appUrl,
-            now: now,
-            users: results.users,
-            challenges: results.challenges,
-            stories: results.stories,
-            nonprofits: results.nonprofits
-          });
-        });
-      }
-    );
-  }
+  app.use(noLangRouter);
+  app.use('/:lang', router);
 
   function chat(req, res) {
     res.redirect('https://gitter.im/FreeCodeCamp/FreeCodeCamp');
   }
 
-  function showLabs(req, res) {
-    res.render('resources/labs', {
-      title: 'Projects Built by Free Code Camp Software Engineers',
-      projects: labs
+  function howNonprofitProjectsWork(req, res) {
+      res.render('resources/how-nonprofit-projects-work', {
+          title: 'How our nonprofit projects work'
+      });
+  }
+
+  function softwareResourcesForNonprofits(req, res) {
+    res.render('resources/software-resources-for-nonprofits', {
+      title: 'Software Resources for Nonprofits'
     });
   }
 
-  function terms(req, res) {
-      res.render('resources/terms-of-service', {
-            title: 'Terms of Service'
-      });
-  }
-
-  function privacy(req, res) {
-      res.render('resources/privacy', {
-          title: 'Privacy'
-      });
-  }
-
-  function codeOfConduct(req, res) {
-      res.render('resources/code-of-conduct', {
-          title: 'Code of Conduct'
+  function academicHonesty(req, res) {
+      res.render('resources/academic-honesty', {
+          title: 'Academic Honesty policy'
       });
   }
 
@@ -193,7 +69,7 @@ module.exports = function(app) {
 
   function showTestimonials(req, res) {
     res.render('resources/stories', {
-      title: 'Testimonials from Happy Free Code Camp Students ' +
+      title: 'Testimonials from Happy freeCodeCamp Students ' +
         'who got Software Engineer Jobs',
       stories: testimonials.slice(0, 72),
       moreStories: true
@@ -202,17 +78,10 @@ module.exports = function(app) {
 
   function showAllTestimonials(req, res) {
     res.render('resources/stories', {
-      title: 'Testimonials from Happy Free Code Camp Students ' +
+      title: 'Testimonials from Happy freeCodeCamp Students ' +
         'who got Software Engineer Jobs',
       stories: testimonials,
       moreStories: false
-    });
-  }
-
-  function showShop(req, res) {
-    res.render('resources/shop', {
-      title: 'Support Free Code Camp by Buying t-shirts, ' +
-        'stickers, and other goodies'
     });
   }
 
@@ -251,26 +120,30 @@ module.exports = function(app) {
   }
 
   function twitch(req, res) {
-    res.render('resources/twitch', {
-      title: 'Watch us code on Twitch.tv and LiveCoding.tv'
-    });
+    res.redirect('https://twitch.tv/freecodecamp');
   }
 
-  function unsubscribe(req, res, next) {
-    User.findOne({ where: { email: req.params.email } }, function(err, user) {
-      if (user) {
-        if (err) {
-          return next(err);
-        }
-        user.sendMonthlyEmail = false;
-        user.save(function() {
-          if (err) {
-            return next(err);
-          }
-          res.redirect('/unsubscribed');
+  function unsubscribeAll(req, res, next) {
+    req.checkParams('email', 'Must send a valid email').isEmail();
+    var query = { email: req.params.email };
+    var params = {
+      sendQuincyEmail: false,
+      sendMonthlyEmail: false,
+      sendNotificationEmail: false
+    };
+    return User.updateAll(query, params, function(err, info) {
+      if (err) { return next(err); }
+      if (info.count === 0) {
+        req.flash('info', {
+          msg: 'Email address not found. ' +
+          'Please update your Email preferences from your profile.'
         });
+        return res.redirect('/map');
       } else {
-        res.redirect('/unsubscribed');
+        req.flash('info', {
+          msg: 'We\'ve successfully updated your Email preferences.'
+        });
+        return res.redirect('/unsubscribed');
       }
     });
   }
@@ -278,12 +151,6 @@ module.exports = function(app) {
   function unsubscribed(req, res) {
     res.render('resources/unsubscribed', {
       title: 'You have been unsubscribed'
-    });
-  }
-
-  function getStarted(req, res) {
-    res.render('resources/get-started', {
-      title: 'How to get started with Free Code Camp'
     });
   }
 
@@ -298,9 +165,9 @@ module.exports = function(app) {
       [
         'https://api.github.com/repos/freecodecamp/',
         'freecodecamp/pulls?client_id=',
-        secrets.github.clientID,
+        githubClient,
         '&client_secret=',
-        secrets.github.clientSecret
+        githubSecret
       ].join(''),
       githubHeaders,
       function(err, status1, pulls) {
@@ -309,13 +176,13 @@ module.exports = function(app) {
           Object.keys(JSON.parse(pulls)).length :
           'Can\'t connect to github';
 
-        request(
+        return request(
           [
             'https://api.github.com/repos/freecodecamp/',
             'freecodecamp/issues?client_id=',
-            secrets.github.clientID,
+            githubClient,
             '&client_secret=',
-            secrets.github.clientSecret
+            githubSecret
           ].join(''),
           githubHeaders,
           function(err, status2, issues) {
@@ -323,42 +190,12 @@ module.exports = function(app) {
             issues = ((pulls === parseInt(pulls, 10)) && issues) ?
             Object.keys(JSON.parse(issues)).length - pulls :
               "Can't connect to GitHub";
-            res.send({
+            return res.send({
               issues: issues,
               pulls: pulls
             });
           }
         );
-      }
-    );
-  }
-
-  function trelloCalls(req, res, next) {
-    request(
-      'https://trello.com/1/boards/BA3xVpz9/cards?key=' +
-      secrets.trello.key,
-      function(err, status, trello) {
-        if (err) { return next(err); }
-        trello = (status && status.statusCode === 200) ?
-          (JSON.parse(trello)) :
-          'Can\'t connect to to Trello';
-
-        res.end(JSON.stringify(trello));
-      });
-  }
-
-  function bloggerCalls(req, res, next) {
-    request(
-      'https://www.googleapis.com/blogger/v3/blogs/2421288658305323950/' +
-        'posts?key=' +
-      secrets.blogger.key,
-      function(err, status, blog) {
-        if (err) { return next(err); }
-
-        blog = (status && status.statusCode === 200) ?
-          JSON.parse(blog) :
-          'Can\'t connect to Blogger';
-        res.end(JSON.stringify(blog));
       }
     );
   }

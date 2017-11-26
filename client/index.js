@@ -1,99 +1,78 @@
-import unused from './es6-shims'; // eslint-disable-line
+import './es6-shims';
 import Rx from 'rx';
-import React from 'react';
-import Fetchr from 'fetchr';
-import debugFactory from 'debug';
-import { Router } from 'react-router';
-import { createLocation, createHistory } from 'history';
-import { hydrate } from 'thundercats';
-import { render$ } from 'thundercats-react';
+import debug from 'debug';
+import { render } from 'redux-epic';
+import createHistory from 'history/createBrowserHistory';
+import useLangRoutes from './utils/use-lang-routes';
+import sendPageAnalytics from './utils/send-page-analytics';
+import flashToToast from './utils/flash-to-toast';
 
-import app$ from '../common/app';
-import historySaga from './history-saga';
-import errSaga from './err-saga';
+import { App, createApp, provideStore } from '../common/app';
+import { getLangFromPath } from '../common/app/utils/lang';
 
-const debug = debugFactory('fcc:client');
-const DOMContianer = document.getElementById('fcc');
-const catState = window.__fcc__.data || {};
-const services = new Fetchr({
-  xhrPath: '/services'
-});
+// client specific epics
+import epics from './epics';
 
-Rx.config.longStackSupport = !!debug.enabled;
-const history = createHistory();
-const appLocation = createLocation(
-  location.pathname + location.search
-);
+import {
+  isColdStored,
+  getColdStorage,
+  saveToColdStorage
+} from './cold-reload';
 
-// returns an observable
-app$({ history, location: appLocation })
-  .flatMap(
-    ({ AppCat }) => {
-      // instantiate the cat with service
-      const appCat = AppCat(null, services, history);
-      // hydrate the stores
-      return hydrate(appCat, catState).map(() => appCat);
-    },
-    // not using nextLocation at the moment but will be used for
-    // redirects in the future
-    ({ nextLocation, props }, appCat) => ({ nextLocation, props, appCat })
-  )
-  .doOnNext(({ appCat }) => {
-    const appStore$ = appCat.getStore('appStore');
+const isDev = Rx.config.longStackSupport = debug.enabled('fcc:*');
+const log = debug('fcc:client');
+const hotReloadTimeout = 2000;
+const { csrf: { token: csrfToken } = {} } = window.__fcc__;
+const DOMContainer = document.getElementById('fcc');
+const defaultState = isColdStored() ?
+  getColdStorage() :
+  window.__fcc__.data;
+const primaryLang = getLangFromPath(window.location.pathname);
 
-    const {
-      toast,
-      updateLocation,
-      goTo,
-      goBack
-    } = appCat.getActions('appActions');
+defaultState.app.csrfToken = csrfToken;
+defaultState.toasts = flashToToast(window.__fcc__.flash);
 
+// make empty object so hot reload works
+window.__fcc__ = {};
 
-    const routerState$ = appStore$
-      .map(({ location }) => location)
-      .filter(location => !!location);
+const serviceOptions = { xhrPath: '/services', context: { _csrf: csrfToken } };
 
-    // set page title
-    appStore$
-      .pluck('title')
-      .distinctUntilChanged()
-      .doOnNext(title => document.title = title)
-      .subscribe(() => {});
+const history = useLangRoutes(createHistory, primaryLang)();
+sendPageAnalytics(history, window.ga);
 
-    historySaga(
-      history,
-      updateLocation,
-      goTo,
-      goBack,
-      routerState$
-    );
+const devTools = window.devToolsExtension ? window.devToolsExtension() : f => f;
 
-    const err$ = appStore$
-      .pluck('err')
-      .filter(err => !!err)
-      .distinctUntilChanged();
+const epicOptions = {
+  isDev,
+  window,
+  document: window.document,
+  location: window.location,
+  history: window.history
+};
 
-    errSaga(err$, toast);
+createApp({
+    history,
+    serviceOptions,
+    defaultState,
+    epics,
+    epicOptions,
+    enhancers: [ devTools ]
   })
-  // allow store subscribe to subscribe to actions
-  .delay(10)
-  .flatMap(({ props, appCat }) => {
-    props.history = history;
-
-    return render$(
-      appCat,
-      React.createElement(Router, props),
-      DOMContianer
-    );
-  })
-  .subscribe(
-    () => {
-      debug('react rendered');
-    },
-    err => {
-      throw err;
-    },
-    () => {
-      debug('react closed subscription');
+  .doOnNext(({ store }) => {
+    if (module.hot && typeof module.hot.accept === 'function') {
+      module.hot.accept(err => {
+        if (err) { console.error(err); }
+        log('saving state and refreshing.');
+        log('ignore react ssr warning.');
+        saveToColdStorage(store.getState());
+        setTimeout(() => window.location.reload(), hotReloadTimeout);
+      });
     }
+  })
+  .doOnNext(() => log('rendering'))
+  .flatMap(({ store }) => render(provideStore(App, store), DOMContainer))
+  .subscribe(
+    () => debug('react rendered'),
+    err => { throw err; },
+    () => debug('react closed subscription')
   );

@@ -1,17 +1,17 @@
 import _ from 'lodash';
+import loopback from 'loopback';
+import path from 'path';
 import dedent from 'dedent';
 import { Observable } from 'rx';
-import debugFactory from 'debug';
+import debug from 'debug';
+import { isEmail } from 'validator';
 
 import {
   ifNoUser401,
   ifNoUserSend
 } from '../utils/middleware';
 
-import {
-  saveUser,
-  observeQuery
-} from '../utils/rx';
+import { observeQuery } from '../utils/rx';
 
 import {
   frontEndChallengeId,
@@ -25,17 +25,20 @@ import {
 
 import certTypes from '../utils/certTypes.json';
 
-const debug = debugFactory('freecc:certification');
+const log = debug('fcc:certification');
+const renderCertifedEmail = loopback.template(path.join(
+  __dirname,
+  '..',
+  'views',
+  'emails',
+  'certified.ejs'
+));
 const sendMessageToNonUser = ifNoUserSend(
   'must be logged in to complete.'
 );
 
-function isCertified(ids, { completedChallenges }) {
-  return _.every(ids, ({ id }) => {
-    return _.some(completedChallenges, (challenge) => {
-      return challenge.id === id || challenge._id === id;
-    });
-  });
+function isCertified(ids, challengeMap = {}) {
+  return _.every(ids, ({ id }) => challengeMap[id]);
 }
 
 function getIdsForCert$(id, Challenge) {
@@ -53,9 +56,54 @@ function getIdsForCert$(id, Challenge) {
     .shareReplay();
 }
 
+// sendCertifiedEmail(
+//   {
+//     email: String,
+//     username: String,
+//     isFrontEndCert: Boolean,
+//     isBackEndCert: Boolean,
+//     isDataVisCert: Boolean
+//   },
+//   send$: Observable
+// ) => Observable
+function sendCertifiedEmail(
+  {
+    email,
+    name,
+    username,
+    isFrontEndCert,
+    isBackEndCert,
+    isDataVisCert
+  },
+  send$
+) {
+  if (
+    !isEmail(email) ||
+    !isFrontEndCert ||
+    !isBackEndCert ||
+    !isDataVisCert
+  ) {
+    return Observable.just(false);
+  }
+  const notifyUser = {
+    type: 'email',
+    to: email,
+    from: 'team@freeCodeCamp.org',
+    subject: dedent`
+      Congratulations on completing all of the
+      freeCodeCamp certificates!
+    `,
+    text: renderCertifedEmail({
+      username,
+      name
+    })
+  };
+  return send$(notifyUser).map(() => true);
+}
+
 export default function certificate(app) {
   const router = app.loopback.Router();
-  const { Challenge } = app.models;
+  const { Email, Challenge } = app.models;
 
   const certTypeIds = {
     [certTypes.frontEnd]: getIdsForCert$(frontEndChallengeId, Challenge),
@@ -90,12 +138,10 @@ export default function certificate(app) {
   app.use(router);
 
   function verifyCert(certType, req, res, next) {
-    Observable.just({})
-      .flatMap(() => {
-        return certTypeIds[certType];
-      })
+    const { user } = req;
+    return user.getChallengeMap$()
+      .flatMap(() => certTypeIds[certType])
       .flatMap(challenge => {
-        const { user } = req;
         const {
           id,
           tests,
@@ -103,39 +149,63 @@ export default function certificate(app) {
           challengeType
         } = challenge;
         if (
-          !user[certType] &&
-          isCertified(tests, user)
+          user[certType] ||
+          !isCertified(tests, user.challengeMap)
         ) {
-          user[certType] = true;
-          user.completedChallenges.push({
-            id,
-            name,
-            completedDate: new Date(),
-            challengeType
-          });
-
-          return saveUser(user)
-            // If user has commited to nonprofit,
-            // this will complete his pledge
-            .flatMap(
-              user => completeCommitment$(user),
-              (user, pledgeOrMessage) => {
-                if (typeof pledgeOrMessage === 'string') {
-                  debug(pledgeOrMessage);
-                }
-                // we are only interested in the user object
-                // so we ignore return from completeCommitment$
-                return user;
-              }
-            );
+          return Observable.just(false);
         }
-        return Observable.just(user);
+        const updateData = {
+          $set: {
+            [`challengeMap.${id}`]: {
+              id,
+              name,
+              completedDate: new Date(),
+              challengeType
+            },
+            [certType]: true
+          }
+        };
+        // set here so sendCertifiedEmail works properly
+        // not used otherwise
+        user[certType] = true;
+        user.challengeMap[id] = { completedDate: new Date() };
+        return Observable.combineLatest(
+          // update user data
+          user.update$(updateData),
+          // If user has committed to nonprofit,
+          // this will complete their pledge
+          completeCommitment$(user),
+          // sends notification email is user has all three certs
+          // if not it noop
+          sendCertifiedEmail(user, Email.send$),
+          ({ count }, pledgeOrMessage) => ({ count, pledgeOrMessage })
+        )
+          .map(
+            ({ count, pledgeOrMessage }) => {
+              if (typeof pledgeOrMessage === 'string') {
+                log(pledgeOrMessage);
+              }
+              log(`${count} documents updated`);
+              return true;
+            }
+          );
       })
       .subscribe(
-        user => {
-          if (
-            user[certType]
-          ) {
+        (didCertify) => {
+          if (didCertify) {
+            // Check if they have a name set
+            if (user.name === '') {
+              return res.status(200).send(
+                dedent`
+                  We need your name so we can put it on your certificate.
+                  <a href="https://github.com/settings/profile">Add your
+                  name to your GitHub account</a>, then go to your
+                  <a href="https://www.freecodecamp.org/settings">settings
+                  page</a> and click the "update my portfolio from GitHub"
+                  button. Then we can issue your certificate.
+                  `
+                );
+             }
             return res.status(200).send(true);
           }
           return res.status(200).send(
@@ -150,14 +220,9 @@ export default function certificate(app) {
   }
 
   function postHonest(req, res, next) {
-    const { user } = req;
-    user.isHonest = true;
-    saveUser(user)
-      .subscribe(
-        (user) => {
-          res.status(200).send(!!user.isHonest);
-        },
-        next
-      );
+    return req.user.update$({ $set: { isHonest: true } }).subscribe(
+      () => res.status(200).send(true),
+      next
+    );
   }
 }

@@ -23,7 +23,7 @@ import {
 } from '../utils/middleware';
 
 const sendNonUserToSignIn = ifNoUserRedirectTo(
-  '/login',
+  '/signin',
   'You must be signed in to commit to a nonprofit.',
   'info'
 );
@@ -34,7 +34,7 @@ const sendNonUserToCommit = ifNoUserRedirectTo(
   'info'
 );
 
-const debug = debugFactory('freecc:commit');
+const debug = debugFactory('fcc:commit');
 
 function findNonprofit(name) {
   let nonprofit;
@@ -50,6 +50,7 @@ function findNonprofit(name) {
 
 export default function commit(app) {
   const router = app.loopback.Router();
+  const api = app.loopback.Router();
   const { Pledge } = app.models;
 
   router.get(
@@ -68,19 +69,20 @@ export default function commit(app) {
     renderDirectory
   );
 
-  router.post(
+  api.post(
     '/commit/stop-commitment',
     sendNonUserToCommit,
     stopCommit
   );
 
-  router.post(
+  api.post(
     '/commit/complete-goal',
     sendNonUserToCommit,
     completeCommitment
   );
 
-  app.use(router);
+  app.use(api);
+  app.use('/:lang', router);
 
   function commitToNonprofit(req, res, next) {
     const { user } = req;
@@ -104,20 +106,20 @@ export default function commit(app) {
             req.flash('info', {
               msg: dedent`
                 Looks like you already have a pledge to ${pledge.displayName}.
-                Hitting commit here will replace your old commitment.
+                Clicking "Commit" here will replace your old commitment. If you
+                do change your commitment, please remember to cancel your
+                previous recurring donation directly with ${pledge.displayName}.
               `
             });
           }
           res.render(
             'commit/',
-            Object.assign(
-              {
-                title: 'Commit to a nonprofit. Commit to your goal.',
-                pledge
-              },
-              commitGoals,
-              nonprofit
-            )
+            {
+              title: 'Commit to a nonprofit. Commit to your goal.',
+              pledge,
+              ...commitGoals,
+              ...nonprofit
+            }
           );
         },
         next
@@ -139,14 +141,12 @@ export default function commit(app) {
       .flatMap(oldPledge => {
         // create new pledge for user
         const pledge = Pledge(
-          Object.assign(
-            {
-              amount,
-              goal,
-              userId: user.id
-            },
-            nonprofit
-          )
+          {
+            amount,
+            goal,
+            userId: user.id,
+            ...nonprofit
+          }
         );
 
         if (oldPledge) {
@@ -169,7 +169,8 @@ export default function commit(app) {
             msg: dedent`
               Congratulations, you have committed to giving
               ${displayName} $${amount} each month until you have completed
-              your ${goal}.
+              your ${goal}. Please remember to cancel your pledge directly
+              with ${displayName} once you finish.
             `
           });
           res.redirect('/' + user.username);
@@ -217,11 +218,18 @@ export default function commit(app) {
       })
       .subscribe(
         pledge => {
-          let msg = `You have successfully stopped your pledge.`;
+          let msg = dedent`
+            You have successfully stopped your pledge. Please
+            remember to cancel your recurring donation directly
+            with the nonprofit if you haven't already done so.
+          `;
           if (!pledge) {
-            msg = `No pledge found for user ${user.username}.`;
+            msg = dedent`
+              It doesn't look like you had an active pledge, so
+              there's no pledge to stop.
+            `;
           }
-          req.flash('errors', { msg });
+          req.flash('info', { msg });
           return res.redirect(`/${user.username}`);
         },
         next

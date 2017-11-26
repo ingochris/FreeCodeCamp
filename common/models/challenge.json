@@ -51,6 +51,11 @@
       "type": "number",
       "description": "Used to determine super block order, set by prepending two digit number to super block folder name"
     },
+    "hint": {
+      "type": "array",
+      "description": "hints must be a single line of plain text",
+      "default": []
+    },
     "block": {
       "type": "string"
     },
@@ -60,65 +65,38 @@
     "description": {
       "type": "array"
     },
+    "image": {
+      "type": "string"
+    },
     "tests": {
       "type": "array"
     },
     "head": {
       "type": "array",
-      "default": [],
-      "description": "appended to user code"
+      "description": "Appended to user code",
+      "default": []
     },
     "tail": {
       "type": "array",
-      "default": [],
-      "description": "prepended to user code"
+      "description": "Prepended to user code",
+      "default": []
     },
     "helpRoom": {
       "type": "string",
-      "default": "Help",
-      "description": "Gitter help chatroom this challenge belongs too. Must be PascalCase"
+      "description": "Gitter help chatroom this challenge belongs too. Must be PascalCase",
+      "default": "Help"
     },
     "fileName": {
       "type": "string",
-      "description": "filename challenge comes from. Used in dev mode"
+      "description": "Filename challenge comes from. Used in dev mode"
     },
     "challengeSeed": {
       "type": "array"
     },
     "challengeType": {
-      "type": "string"
+      "type": "number"
     },
     "MDNlinks": {
-      "type": "array"
-    },
-    "nameCn": {
-      "type": "string"
-    },
-    "descriptionCn": {
-      "type": "array"
-    },
-    "nameFr": {
-      "type": "string"
-    },
-    "descriptionFr": {
-      "type": "array"
-    },
-    "nameRu": {
-      "type": "string"
-    },
-    "descriptionRu": {
-      "type": "array"
-    },
-    "nameEs": {
-      "type": "string"
-    },
-    "descriptionEs": {
-      "type": "array"
-    },
-    "namePt": {
-      "type": "string"
-    },
-    "descriptionPt": {
       "type": "array"
     },
     "solutions": {
@@ -127,6 +105,31 @@
     },
     "releasedOn": {
       "type": "string"
+    },
+    "translations": {
+      "type": "object",
+      "default": "{}"
+    },
+    "required": {
+      "type": [
+        {
+          "type": {
+            "link": {
+              "type": "string",
+              "description": "Used for css files"
+            },
+            "src": {
+              "type": "string",
+              "description": "Used for script files"
+            },
+            "crossDomain": {
+              "type": "boolean",
+              "description": "Files coming from FreeCodeCamp must mark this true"
+            }
+          }
+        }
+      ],
+      "default": []
     }
   },
   "validations": [],
@@ -145,5 +148,5 @@
       "permission": "ALLOW"
     }
   ],
-  "methods": []
+  "methods": {}
 }

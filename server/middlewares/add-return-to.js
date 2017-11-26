@@ -1,6 +1,5 @@
 const pathsOfNoReturn = [
   'link',
-  'bower_components',
   'auth',
   'login',
   'logout',
@@ -36,8 +35,9 @@ export default function addReturnToUrl() {
     ) {
       return next();
     }
-    req.session.returnTo = req.originalUrl === '/map-aside'
-    ? '/map' : req.originalUrl;
-    next();
+    req.session.returnTo = req.originalUrl === '/map-aside' ?
+      '/map' :
+      req.originalUrl;
+    return next();
   };
 }

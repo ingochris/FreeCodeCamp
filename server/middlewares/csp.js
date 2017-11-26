@@ -4,14 +4,29 @@ let trusted = [
   "'self'"
 ];
 
+const host = process.env.HOST || 'localhost';
+const port = process.env.SYNC_PORT || '3000';
+
 if (process.env.NODE_ENV !== 'production') {
-  trusted.push('ws://localhost:3001');
+  trusted = trusted.concat([
+    `ws://${host}:${port}`
+  ]);
 }
 
 export default function csp() {
-  return helmet.csp({
+  return helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: trusted,
+      defaultSrc: trusted.concat([
+        'https://*.cloudflare.com',
+        '*.cloudflare.com',
+        'https://*.optimizely.com'
+      ]),
+      connectSrc: trusted.concat([
+        'https://glitch.com',
+        'https://*.glitch.com',
+        'https://*.glitch.me',
+        'https://*.cloudflare.com'
+      ]),
       scriptSrc: [
         "'unsafe-eval'",
         "'unsafe-inline'",
@@ -26,10 +41,9 @@ export default function csp() {
         '*.jsdelivr.com',
         '*.twimg.com',
         'https://*.twimg.com',
-        'vimeo.com'
-      ].concat(trusted),
-      connectSrc: [
-        'vimeo.com'
+        '*.youtube.com',
+        '*.ytimg.com',
+        'https://*.optimizely.com'
       ].concat(trusted),
       styleSrc: [
         "'unsafe-inline'",
@@ -38,7 +52,8 @@ export default function csp() {
         '*.bootstrapcdn.com',
         'https://*.bootstrapcdn.com',
         '*.cloudflare.com',
-        'https://*.cloudflare.com'
+        'https://*.cloudflare.com',
+        'https://*.optimizely.com'
       ].concat(trusted),
       fontSrc: [
         '*.cloudflare.com',
@@ -46,7 +61,8 @@ export default function csp() {
         '*.bootstrapcdn.com',
         '*.googleapis.com',
         '*.gstatic.com',
-        'https://*.bootstrapcdn.com'
+        'https://*.bootstrapcdn.com',
+        'https://*.optimizely.com'
       ].concat(trusted),
       imgSrc: [
         // allow all input since we have user submitted images for
@@ -62,10 +78,11 @@ export default function csp() {
       frameSrc: [
         '*.gitter.im',
         '*.gitter.im https:',
-        '*.vimeo.com',
+        '*.youtube.com',
         '*.twitter.com',
         '*.ghbtns.com',
-        '*.freecatphotoapp.com'
+        '*.freecatphotoapp.com',
+        'freecodecamp.github.io'
       ].concat(trusted)
     },
     // set to true if you only want to report errors

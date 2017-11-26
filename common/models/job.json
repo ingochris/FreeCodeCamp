@@ -71,32 +71,32 @@
     },
     "isFrontEndCert": {
       "type": "boolean",
-      "defaut": false,
-      "description": "Camper must be front end certified to apply"
+      "description": "Camper must be front end certified to apply",
+      "defaut": false
     },
     "isBackEndCert": {
       "type": "boolean",
-      "default": false,
-      "description": "Camper must be back end certified to apply"
+      "description": "Camper must be back end certified to apply",
+      "default": false
     },
     "isFullStackCert": {
       "type": "boolean",
-      "default": false,
-      "description": "Camper must be full stack certified to apply"
+      "description": "Camper must be full stack certified to apply",
+      "default": false
     },
     "isRemoteOk": {
       "type": "boolean",
-      "default": false,
-      "description": "Camper may work remotely"
+      "description": "Camper may work remotely",
+      "default": false
     },
     "howToApply": {
       "type": "string",
       "required": true,
-      "description": "How do campers apply to job"
+      "description": "How campers apply to a job"
     },
     "promoCodeUsed": {
       "type": "string",
-      "description": "the promocode, if any, that the job uses"
+      "description": "The promocode, if any, that the job uses"
     }
   },
   "validations": [],
@@ -115,5 +115,5 @@
       "permission": "ALLOW"
     }
   ],
-  "methods": []
+  "methods": {}
 }

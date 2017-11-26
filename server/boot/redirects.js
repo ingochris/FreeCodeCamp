@@ -4,8 +4,8 @@ module.exports = function(app) {
   router.get('/nonprofit-project-instructions', function(req, res) {
     res.redirect(
       301,
-      '//github.com/FreeCodeCamp/freecodecamp/wiki/' +
-        "How-Free-Code-Camp's-Nonprofit-Projects-work"
+      'http://forum.freecodecamp.org/t/'
+      + 'how-free-code-camps-nonprofits-projects-work/19547'
     );
   });
 
@@ -13,15 +13,10 @@ module.exports = function(app) {
     res.redirect(301, '/pmi-acp-agile-project-managers');
   });
 
-  router.get('/wiki', function(req, res) {
-    res.redirect(301, '//github.com/freecodecamp/freecodecamp/wiki');
-  });
-
   router.get('/privacy', function(req, res) {
     res.redirect(
       301,
-      '//github.com/FreeCodeCamp/freecodecamp/wiki/' +
-        "Free-Code-Camp's-Privacy-Policy"
+      'http://forum.freecodecamp.org/t/free-code-camp-privacy-policy/19545'
     );
   });
 
@@ -30,11 +25,7 @@ module.exports = function(app) {
   });
 
   router.get('/field-guide/*', function(req, res) {
-    res.redirect(302, '//github.com/freecodecamp/freecodecamp/wiki');
-  });
-
-  router.get('/about', function(req, res) {
-    res.redirect(301, '/map');
+    res.redirect(302, 'http://forum.freecodecamp.org');
   });
 
   app.use(router);
